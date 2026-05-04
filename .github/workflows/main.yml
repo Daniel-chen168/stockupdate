@@ -21,16 +21,16 @@ jobs:
           python-version: '3.10'
 
       - name: Install Dependencies
-        run: pip install pandas pyarrow fastparquet requests pytz numpy
+        # ★ 關鍵修正：在這裡加上 yfinance ★
+        run: pip install yfinance pandas pyarrow fastparquet requests pytz numpy
 
       - name: Run Pipeline
-        # 執行此程式會自動建立 stock_data 與 public 資料夾[cite: 2, 7]
+        # 執行此程式會自動下載數據並建立 public 資料夾[cite: 2, 7]
         run: python run_auto_pipeline.py
 
       - name: Upload Website Folder
         uses: actions/upload-pages-artifact@v3
         with:
-          # 指定要新增並部署的資料夾名稱
           path: 'public/'
 
       - name: Deploy to GitHub Pages
