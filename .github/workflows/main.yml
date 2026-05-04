@@ -1,8 +1,10 @@
 name: Auto Update IKE TOOL
+
 on:
   schedule:
-    - cron: '30 8 * * 1-5' # 台北時間 16:30 執行
-  workflow_dispatch: # 支援手動觸發
+    # 台北時間週一至週五下午 4:30 執行 (16:30 UTC+8 = 08:30 UTC)
+    - cron: '30 8 * * 1-5'
+  workflow_dispatch: # 支援手動觸發，方便測試
 
 permissions:
   contents: write
@@ -13,25 +15,30 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
       - name: Install Dependencies
-        # ★ 關鍵修正：在這裡加上 yfinance ★
-        run: pip install yfinance pandas pyarrow fastparquet requests pytz numpy
+        # 這裡補齊了所有必要的套件，解決 ModuleNotFoundError 問題
+        run: |
+          pip install yfinance pandas pyarrow fastparquet requests pytz numpy scipy
 
       - name: Run Pipeline
-        # 執行此程式會自動下載數據並建立 public 資料夾[cite: 2, 7]
+        # 執行流水線：更新清單 -> 下載數據 -> 型態辨識 -> 生成網頁[cite: 2, 7]
+        # 執行此步驟會產出 public/ 資料夾
         run: python run_auto_pipeline.py
 
       - name: Upload Website Folder
         uses: actions/upload-pages-artifact@v3
         with:
+          # 指定要部署的資料夾[cite: 7]
           path: 'public/'
 
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
