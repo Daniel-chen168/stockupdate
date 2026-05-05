@@ -15,12 +15,33 @@ except ImportError as e:
 def get_html_template(title, rows, now_str):
     """
     通用 HTML 模板：
-    1. 凍結選單 (position: sticky) 方便在手機與電腦上快速導航[cite: 1, 7]。
-    2. 移除 target="_blank"，確保所有工具都在原視窗切換，相容手機操作[cite: 7]。
-    3. 導覽列包含：型態篩選、全球排行、布林三步曲、外資日報[cite: 1, 7]。
+    1. 凍結選單 (position: sticky) 方便導航[cite: 9]。
+    2. 原視窗切換外部連結，相容手機操作[cite: 7, 9]。
+    3. 底部整合 Giscus 討論區[cite: 7]。
     """
     is_index = "型態篩選" in title
     is_ranking = "排行榜" in title
+    
+    # 留言板 HTML 區塊
+    giscus_section = """
+    <div class="container" style="margin-top: 50px; border-top: 1px solid #30363d; padding-top: 30px; padding-bottom: 50px;">
+        <h2 style="color: #58a6ff; font-size: 20px; margin-bottom: 20px;">💬 交流討論區</h2>
+        <script src="https://giscus.app/client.js"
+                data-repo="daniel-chen168/stockupdate"
+                data-repo-id="R_kgDOST7VcA"
+                data-category="General"
+                data-category-id="DIC_kwDOST7VcM4C8W3s"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="dark_dimmed"
+                data-lang="zh-TW"
+                crossorigin="anonymous"
+                async></script>
+    </div>
+    """
     
     return f"""
     <!DOCTYPE html>
@@ -33,7 +54,7 @@ def get_html_template(title, rows, now_str):
         <style>
             body {{ font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background: #0d1117; color: #c9d1d9; margin: 0; padding: 0; }}
             
-            /* 凍結選單設置[cite: 7] */
+            /* 凍結選單設置[cite: 9] */
             .navbar {{ 
                 background: #161b22; 
                 padding: 10px 15px; 
@@ -45,7 +66,7 @@ def get_html_template(title, rows, now_str):
                 z-index: 1000; 
                 align-items: center;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-                overflow-x: auto; /* 手機版寬度不足時支援橫向滑動選單 */
+                overflow-x: auto; 
                 white-space: nowrap;
                 -webkit-overflow-scrolling: touch;
             }}
@@ -54,7 +75,7 @@ def get_html_template(title, rows, now_str):
             .navbar a:hover {{ background: #30363d; color: #58a6ff; }}
             .navbar a.active {{ color: #58a6ff; border-bottom: 2px solid #58a6ff; border-radius: 0; }}
             
-            /* 外部連結樣式區分[cite: 7] */
+            /* 外部連結樣式[cite: 9] */
             .navbar .external-link {{ color: #ffab70; border: 1px solid #ffab7033; }}
             .navbar .external-link:hover {{ background: #ffab7022; }}
 
@@ -62,7 +83,7 @@ def get_html_template(title, rows, now_str):
             h1 {{ color: #58a6ff; font-size: 22px; margin-top: 5px; }}
             .update-time {{ color: #8b949e; margin-bottom: 15px; font-size: 13px; }}
             
-            /* Table 樣式優化：適配手機顯示[cite: 7] */
+            /* Table 樣式優化[cite: 9] */
             table.dataTable {{ background: #161b22 !important; border: 1px solid #30363d !important; border-radius: 8px; }}
             table.dataTable thead th {{ background: #21262d !important; color: #8b949e; font-size: 14px; border-bottom: 1px solid #30363d !important; }}
             table.dataTable tbody td {{ border-bottom: 1px solid #21262d !important; font-size: 14px; }}
@@ -71,7 +92,6 @@ def get_html_template(title, rows, now_str):
             .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate {{ color: #8b949e !important; padding-top: 15px; font-size: 13px; }}
             input {{ background: #0d1117; border: 1px solid #30363d; color: white; padding: 5px; border-radius: 4px; }}
             
-            /* 歷史紀錄面板[cite: 7] */
             #history-panel {{ background: #1c2128; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none; border: 1px solid #30363d; }}
             .history-item {{ display: inline-block; background: #30363d; padding: 4px 8px; border-radius: 4px; margin: 4px; font-size: 11px; color: #58a6ff; }}
         </style>
@@ -81,7 +101,7 @@ def get_html_template(title, rows, now_str):
             <a href="index.html" class="{'active' if is_index else ''}">🎯 型態篩選</a>
             <a href="ranking.html" class="{'active' if is_ranking else ''}">📊 全球排行</a>
             
-            <!-- 外部連結：移除 target="_blank"，支援原視窗來回切換[cite: 7] -->
+            <!-- 外部連結：移除 target="_blank"，支援原視窗來回切換[cite: 7, 9] -->
             <a href="https://daniel-chen168.github.io/new11/" class="external-link">📈 布林三步曲</a>
             <a href="https://chiahowu1231-ship-it.github.io/Foreign_point_stock_report/" class="external-link">🏛️ 外資日報</a>
             
@@ -112,6 +132,9 @@ def get_html_template(title, rows, now_str):
             </table>
         </div>
 
+        <!-- 插入留言板[cite: 7] -->
+        {giscus_section}
+
         <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
         <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
         <script>
@@ -119,7 +142,7 @@ def get_html_template(title, rows, now_str):
                 $('#mainTable').DataTable({{
                     "order": [[ {2 if not is_index else 4}, "desc" ]],
                     "pageLength": 50,
-                    "scrollX": true, // 支援手機橫向滑動表格[cite: 7]
+                    "scrollX": true, 
                     "language": {{
                         "search": "搜尋:",
                         "lengthMenu": "_MENU_",
@@ -154,11 +177,9 @@ def get_html_template(title, rows, now_str):
     """
 
 def generate_web():
-    # 統一路徑規範[cite: 1, 7]
     db_path = os.path.normpath("stock_data/1d")
     ticker_file = "ticker_names.txt"
     
-    # 1. 載入股票名稱對照表[cite: 1, 7]
     name_map = {}
     if os.path.exists(ticker_file):
         for enc in ['utf-8', 'cp950', 'utf-16']:
@@ -170,7 +191,6 @@ def generate_web():
                 break
             except: continue
 
-    # 2. 掃描所有 Parquet 檔案[cite: 1, 7]
     all_stocks = []
     files = glob.glob(os.path.join(db_path, "*.parquet"))
     print(f"📡 正在處理 {len(files)} 檔數據...")
@@ -194,7 +214,6 @@ def generate_web():
             last_close = float(engine.df['Close'].iloc[-1])
             if pd.isna(last_close): continue
 
-            # 執行型態辨識[cite: 3, 7]
             analysis = PatternRecognizer.find_triangle_lines(engine.df)
             
             all_stocks.append({
@@ -208,7 +227,6 @@ def generate_web():
             })
         except: continue
 
-    # 3. 準備生成網頁[cite: 7]
     taipei_tz = timezone('Asia/Taipei')
     now_str = datetime.now(taipei_tz).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -231,10 +249,8 @@ def generate_web():
             </tr>"""
         return html_rows
 
-    # 分類資料[cite: 7]
     screened_list = [s for s in all_stocks if s['stars'] > 0]
     
-    # 4. 產出檔案[cite: 7]
     os.makedirs("public", exist_ok=True)
     
     with open("public/index.html", "w", encoding="utf-8") as f:
