@@ -13,9 +13,13 @@ except ImportError as e:
     exit(1)
 
 def get_html_template(title, rows, now_str):
-    """通用 HTML 模板：包含外部連結整合，支援工具間來回切換"""
+    """
+    通用 HTML 模板：
+    1. 凍結選單 (position: sticky) 方便在手機與電腦上快速導航[cite: 1, 7]。
+    2. 移除 target="_blank"，確保所有工具都在原視窗切換，相容手機操作[cite: 7]。
+    3. 導覽列包含：型態篩選、全球排行、布林三步曲、外資日報[cite: 1, 7]。
+    """
     is_index = "型態篩選" in title
-    # 判斷是否為排行榜頁面
     is_ranking = "排行榜" in title
     
     return f"""
@@ -28,50 +32,68 @@ def get_html_template(title, rows, now_str):
         <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
         <style>
             body {{ font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background: #0d1117; color: #c9d1d9; margin: 0; padding: 0; }}
-            .navbar {{ background: #161b22; padding: 12px 20px; border-bottom: 1px solid #30363d; display: flex; gap: 20px; position: sticky; top: 0; z-index: 100; align-items: center; }}
-            .navbar a {{ color: #c9d1d9; text-decoration: none; font-weight: bold; font-size: 14px; padding: 5px 10px; border-radius: 4px; transition: 0.2s; }}
+            
+            /* 凍結選單設置[cite: 7] */
+            .navbar {{ 
+                background: #161b22; 
+                padding: 10px 15px; 
+                border-bottom: 1px solid #30363d; 
+                display: flex; 
+                gap: 12px; 
+                position: sticky; 
+                top: 0; 
+                z-index: 1000; 
+                align-items: center;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+                overflow-x: auto; /* 手機版寬度不足時支援橫向滑動選單 */
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }}
+            
+            .navbar a {{ color: #c9d1d9; text-decoration: none; font-weight: bold; font-size: 13px; padding: 6px 10px; border-radius: 4px; flex-shrink: 0; transition: 0.2s; }}
             .navbar a:hover {{ background: #30363d; color: #58a6ff; }}
             .navbar a.active {{ color: #58a6ff; border-bottom: 2px solid #58a6ff; border-radius: 0; }}
             
-            /* 特別標註外部工具連結樣式 */
-            .navbar .external-link {{ color: #ffab70; border: 1px solid #ffab7044; }}
-            .navbar .external-link:hover {{ background: #ffab7022; color: #ffc9a8; }}
+            /* 外部連結樣式區分[cite: 7] */
+            .navbar .external-link {{ color: #ffab70; border: 1px solid #ffab7033; }}
+            .navbar .external-link:hover {{ background: #ffab7022; }}
 
-            .container {{ max-width: 1250px; margin: 20px auto; padding: 0 20px; }}
-            h1 {{ color: #58a6ff; font-size: 24px; }}
-            .update-time {{ color: #8b949e; margin-bottom: 20px; font-size: 14px; }}
+            .container {{ max-width: 1250px; margin: 15px auto; padding: 0 15px; }}
+            h1 {{ color: #58a6ff; font-size: 22px; margin-top: 5px; }}
+            .update-time {{ color: #8b949e; margin-bottom: 15px; font-size: 13px; }}
             
-            /* Table 樣式優化 */
-            table.dataTable {{ background: #161b22 !important; border: 1px solid #30363d !important; border-radius: 8px; overflow: hidden; }}
-            table.dataTable thead th {{ background: #21262d !important; color: #8b949e; border-bottom: 1px solid #30363d !important; }}
-            table.dataTable tbody td {{ border-bottom: 1px solid #21262d !important; }}
+            /* Table 樣式優化：適配手機顯示[cite: 7] */
+            table.dataTable {{ background: #161b22 !important; border: 1px solid #30363d !important; border-radius: 8px; }}
+            table.dataTable thead th {{ background: #21262d !important; color: #8b949e; font-size: 14px; border-bottom: 1px solid #30363d !important; }}
+            table.dataTable tbody td {{ border-bottom: 1px solid #21262d !important; font-size: 14px; }}
+            
             .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, 
-            .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate {{ color: #8b949e !important; padding-top: 15px; }}
-            input {{ background: #0d1117; border: 1px solid #30363d; color: white; padding: 6px; border-radius: 4px; }}
+            .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate {{ color: #8b949e !important; padding-top: 15px; font-size: 13px; }}
+            input {{ background: #0d1117; border: 1px solid #30363d; color: white; padding: 5px; border-radius: 4px; }}
             
-            /* 歷史紀錄面板 */
-            #history-panel {{ background: #1c2128; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; border: 1px solid #30363d; }}
-            .history-item {{ display: inline-block; background: #30363d; padding: 4px 10px; border-radius: 4px; margin: 5px; font-size: 12px; color: #58a6ff; text-decoration: none; }}
-            .history-item:hover {{ background: #444c56; }}
+            /* 歷史紀錄面板[cite: 7] */
+            #history-panel {{ background: #1c2128; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none; border: 1px solid #30363d; }}
+            .history-item {{ display: inline-block; background: #30363d; padding: 4px 8px; border-radius: 4px; margin: 4px; font-size: 11px; color: #58a6ff; }}
         </style>
     </head>
     <body>
         <div class="navbar">
-            <a href="index.html" class="{'active' if is_index else ''}">🎯 型態篩選清單</a>
-            <a href="ranking.html" class="{'active' if is_ranking else ''}">📊 全球股價排行</a>
+            <a href="index.html" class="{'active' if is_index else ''}">🎯 型態篩選</a>
+            <a href="ranking.html" class="{'active' if is_ranking else ''}">📊 全球排行</a>
             
-            <!-- 新增布林中軌三步曲連結 -->
-            <a href="https://daniel-chen168.github.io/new11/" class="external-link">📈 布林中軌三步曲 ↗</a>
+            <!-- 外部連結：移除 target="_blank"，支援原視窗來回切換[cite: 7] -->
+            <a href="https://daniel-chen168.github.io/new11/" class="external-link">📈 布林三步曲</a>
+            <a href="https://chiahowu1231-ship-it.github.io/Foreign_point_stock_report/" class="external-link">🏛️ 外資日報</a>
             
-            <a href="javascript:void(0)" onclick="toggleHistory()">🕒 最近瀏覽紀錄</a>
+            <a href="javascript:void(0)" onclick="toggleHistory()">🕒 紀錄</a>
         </div>
 
         <div class="container">
             <h1>{title}</h1>
-            <div class="update-time">最後更新時間：{now_str} (台北時間)</div>
+            <div class="update-time">最後更新：{now_str} (台北時間)</div>
             
             <div id="history-panel">
-                <strong>最近查看過的標的：</strong>
+                <strong>最近瀏覽：</strong>
                 <div id="history-list">尚無紀錄</div>
             </div>
 
@@ -83,7 +105,7 @@ def get_html_template(title, rows, now_str):
                         <th>現價</th>
                         <th>20MA乖離</th>
                         <th>型態標籤</th>
-                        <th>詳細指標細節</th>
+                        <th>指標細節</th>
                     </tr>
                 </thead>
                 <tbody>{rows}</tbody>
@@ -94,24 +116,18 @@ def get_html_template(title, rows, now_str):
         <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
         <script>
             $(document).ready(function() {{
-                var table = $('#mainTable').DataTable({{
-                    "order": [[ {2 if not is_index else 4}, "desc" ]], 
+                $('#mainTable').DataTable({{
+                    "order": [[ {2 if not is_index else 4}, "desc" ]],
                     "pageLength": 50,
+                    "scrollX": true, // 支援手機橫向滑動表格[cite: 7]
                     "language": {{
-                        "search": "搜尋股票:",
-                        "lengthMenu": "顯示 _MENU_ 筆",
-                        "info": "第 _START_ 至 _END_ 筆 (共 _TOTAL_ 筆)",
-                        "paginate": {{ "next": "下一頁", "previous": "上一頁" }}
+                        "search": "搜尋:",
+                        "lengthMenu": "_MENU_",
+                        "info": "共 _TOTAL_ 筆",
+                        "paginate": {{ "next": ">", "previous": "<" }}
                     }},
-                    "columnDefs": [
-                        {{ "type": "num", "targets": 2 }} 
-                    ]
+                    "columnDefs": [{{ "type": "num", "targets": 2 }}]
                 }});
-
-                $('body').on('click', 'a.stock-link', function() {{
-                    saveHistory($(this).data('ticker'));
-                }});
-                
                 loadHistory();
             }});
 
@@ -138,9 +154,11 @@ def get_html_template(title, rows, now_str):
     """
 
 def generate_web():
+    # 統一路徑規範[cite: 1, 7]
     db_path = os.path.normpath("stock_data/1d")
     ticker_file = "ticker_names.txt"
     
+    # 1. 載入股票名稱對照表[cite: 1, 7]
     name_map = {}
     if os.path.exists(ticker_file):
         for enc in ['utf-8', 'cp950', 'utf-16']:
@@ -152,6 +170,7 @@ def generate_web():
                 break
             except: continue
 
+    # 2. 掃描所有 Parquet 檔案[cite: 1, 7]
     all_stocks = []
     files = glob.glob(os.path.join(db_path, "*.parquet"))
     print(f"📡 正在處理 {len(files)} 檔數據...")
@@ -175,6 +194,7 @@ def generate_web():
             last_close = float(engine.df['Close'].iloc[-1])
             if pd.isna(last_close): continue
 
+            # 執行型態辨識[cite: 3, 7]
             analysis = PatternRecognizer.find_triangle_lines(engine.df)
             
             all_stocks.append({
@@ -186,9 +206,9 @@ def generate_web():
                 'details': analysis['details'],
                 'bias': analysis['bias20']
             })
-        except Exception as e:
-            continue
+        except: continue
 
+    # 3. 準備生成網頁[cite: 7]
     taipei_tz = timezone('Asia/Taipei')
     now_str = datetime.now(taipei_tz).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -202,7 +222,7 @@ def generate_web():
             
             html_rows += f"""
             <tr>
-                <td><a href="{histock_url}" target="_blank" class="stock-link" data-ticker="{s['ticker']}" style="color: #58a6ff; text-decoration: none;">{s['ticker']} 🔗</a></td>
+                <td><a href="{histock_url}" class="stock-link" data-ticker="{s['ticker']}" style="color: #58a6ff; text-decoration: none;">{s['ticker']} 🔗</a></td>
                 <td>{s['name']}</td>
                 <td style="text-align: right; font-weight: bold;">{s['price']:.2f}</td>
                 <td style="color: {bias_color};">{s['bias']:.1f}%</td>
@@ -211,17 +231,19 @@ def generate_web():
             </tr>"""
         return html_rows
 
+    # 分類資料[cite: 7]
     screened_list = [s for s in all_stocks if s['stars'] > 0]
     
+    # 4. 產出檔案[cite: 7]
     os.makedirs("public", exist_ok=True)
     
     with open("public/index.html", "w", encoding="utf-8") as f:
         f.write(get_html_template("IKE TOOL - 型態篩選精選", build_rows(screened_list), now_str))
         
     with open("public/ranking.html", "w", encoding="utf-8") as f:
-        f.write(get_html_template("IKE TOOL - 全市場股價排行榜", build_rows(all_stocks), now_str))
+        f.write(get_html_template("IKE TOOL - 全市場排行榜", build_rows(all_stocks), now_str))
 
-    print(f"✅ 網頁生成成功！請查看 public/ 資料夾。")
+    print(f"✅ 網頁生成成功！")
 
 if __name__ == "__main__":
     generate_web()
